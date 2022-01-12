@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+    <link href="index.css" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+
+    <title>Onestepclean</title>
+</head>
+
+<body>
+    <div>
+        <nav class="navbar navbar-expand-md bg-dark">
+            <a class="navbar-brand" href="#">Rekapitulasi <br> Pelanggan List</a>
+            <button type="button" class="btn btn-secondary" onclick="showUserCreateBox()">Tambah Pelanggan</button>
+
+        </nav>
+
+    </div>
+
+    <div class="container">
+        <input class="form-floating id="myInput" type="text" placeholder="Search..">
+        <div class="p-2 bd-highlight">
+        </div>
+    </div>
+    <div class="table-dark">
+        <table class="table table-dark">
+            <thead class="table-dark">
+                <tr>
+                        <th scope="col">ID</th>
+                        <th scope="col">Nama </th>
+                        <th scope="col">Sepatu</th>
+                        <th scope="col">Warna</th>   
+                        <th scope="col">Fitur</th>       
+                        <th scope="col"></th>              
+                </tr>
+            </thead>
+            <tbody id="mytable">
+                <tr>
+                    <th scope="row" colspan="4">Loading</th>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    </div>
+
+
+    <script>
+        $(document).ready(function() {
+            $("#myInput").on("keyup", function() {
+                var value = $(this).val().toLowerCase();
+                $("#mytable tr").filter(function() {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                });
+            });
+        });
+
+        function loadTable() {
+            const xhttp = new XMLHttpRequest();
+            xhttp.open("GET", "http://127.0.0.1:8889/onestepclean");
+            xhttp.send();
+            xhttp.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                    console.log(this.responseText);
+                    var trHtml = '';
+                    const objects = JSON.parse(this.responseText);
+                    for (let object of objects) {
+                        trHtml += '<tr>';
+                        trHtml += '<td>' + object['id'] + '</td>';
+                        trHtml += '<td>' + object['nama'] + '</td>';
+                        trHtml += '<td>' + object['sepatu'] + '</td>';
+                        trHtml += '<td>' + object['warna'] + '</td>';
+                        trHtml += '<td><button type="button" class="btn btn-outline-secondary" onclick = "showUserEditBox(' + object['id'] + ')">Edit</button></td>';
+                        trHtml += '<td><button type="button" class="btn btn-outline-secondary" onclick="userDelete(' + object['id'] + ')"> Hapus</button></td>';
+                        trHtml += '</tr>';
+                    }
+                    document.getElementById("mytable").innerHTML = trHtml;
+                }
+            };
+        }
+        loadTable();
+
+        function showUserCreateBox() {
+            Swal.fire({
+                title: 'Tambah Costumer',
+                html: '<input id="id" class="swal2-input" placeholder="id">' +
+                    '<input id="nama" class="swal2-input" placeholder="Nama">' +
+                    '<input id="sepatu" class="swal2-input" placeholder="Sepatu">' +
+                    '<input id="warna" class="swal2-input" placeholder="Warna">',
+                focusConfirm: false,
+                preConfirm: () => {
+                    userCreate();
+                }
+            })
+        }
+
+        function userCreate() {
+            const id = document.getElementById("id").value;
+            const nama = document.getElementById("nama").value;
+            const sepatu = document.getElementById("sepatu").value;
+            const warna = document.getElementById("warna").value;
+
+            const xhttp = new XMLHttpRequest();
+            xhttp.open("POST", "http://127.0.0.1:8889/onestepclean");
+            xhttp.setRequestHeader("Content-Type", "application/json;");
+            xhttp.send(JSON.stringify({
+                "id": id,
+                "nama": nama,
+                "sepatu": sepatu,
+                "warna": warna
+            }));
+            xhttp.onreadystatechange = function() {
+                if (this.status == 200) {
+                    const objects = JSON.parse(this.responseText);
+                    Swal.fire(objects['message']);
+                    loadTable();
+                }
+            }
+        }
+
+        function showUserEditBox(id) {
+            console.log(id);
+            const xhttp = new XMLHttpRequest();
+            xhttp.open("GET", "http://127.0.0.1:8889/onestepclean/" + id);
+            xhttp.send();
+            xhttp.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                    const objects = JSON.parse(this.responseText);
+                    const costumer = objects["costumer"];
+                    console.log(costumer);
+                    Swal.fire({
+                        title: 'Edit Data',
+                        html: '<input id="id" type="hidden" value="' + objects['id'] + '">' +
+                            '<input id="nama" class="swal2-input" placeholder="Nama " value="' + objects['nama'] + '">' +
+                            '<input id="sepatu" class="swal2-input" placeholder="Sepatu" value="' + objects['sepatu'] + '">' +
+                            '<input id="warna" class="swal2-input" placeholder="Warna" value="' + objects['warna'] + '">',
+                        focusConfirm: false,
+                        preConfirm: () => {
+                            userEdit();
+                        }
+                    })
+                }
+            };
+        }
+
+        function userEdit() {
+            const id = document.getElementById("id").value;
+            const nama = document.getElementById("nama").value;
+            const sepatu = document.getElementById("sepatu").value;
+            const warna = document.getElementById("warna").value;
+
+            const xhttp = new XMLHttpRequest();
+            xhttp.open("PUT", "http://127.0.0.1:8889/onestepclean/updateonestepclean");
+            xhttp.setRequestHeader("Content-Type", "application/json; charset=UTF-8");
+            xhttp.send(JSON.stringify({
+                "id": id,
+                "nama": nama,
+                "sepatu": sepatu,
+                "warna": warna
+            }));
+            xhttp.onreadystatechange = function() {
+                if (this.status == 200) {
+                    const objects = JSON.parse(this.responseText);
+                    Swal.fire(objects['message']);
+                    loadTable();
+                }
+            }
+        }
+
+
+        function userDelete(id) {
+
+            const xhttp = new XMLHttpRequest();
+            xhttp.open("Hapus", "http://127.0.0.1:8889/onestepclean/" + id);
+            xhttp.setRequestHeader("Content-Type", "application/json; charset=UTF-8");
+            xhttp.send(JSON.stringify({
+                "id": id
+            }));
+            xhttp.onreadystatechange = function() {
+                var del = confirm("Are you sure you want to delete this record?");
+                if (del == true, this.status == 200) {
+
+                    const objects = JSON.parse(this.responseText);
+                    Swal.fire(objects["message"]);
+                    loadTable();
+
+                } else {
+                    return false;
+
+                }
+
+            }
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.16/dist/sweetalert2.all.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4" crossorigin="anonymous"></script>
+</body>
+
+</html>

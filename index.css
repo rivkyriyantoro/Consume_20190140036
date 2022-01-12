@@ -1,0 +1,22 @@
+.bg-mynav {
+    background-color: #01ff62;
+}
+
+body {
+    font-size: 1.25rem;
+    background-color: #0a0a0a;
+}
+
+td {
+    line-height: 3rem;
+}
+
+.data {
+    display: none;
+}
+
+.g-signin2
+{
+    position: absolute;
+    margin-top: 5px;
+}
